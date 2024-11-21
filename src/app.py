@@ -2,14 +2,19 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
-from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
+from flask_cors import CORS
+from database import Queue
 from models import db, User
-#from models import Person
+from sms import send
+
+ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
+static_file_dir = os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), '../public/')
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -44,6 +49,56 @@ def handle_hello():
     }
 
     return jsonify(response_body), 200
+
+
+
+list_of_persons = Queue()
+
+@app.route('/new/people', methods=['POST'])
+def create_people():
+    person = request.json
+    list_of_persons.enqueue(person)
+    send("hello you added to the queue", person["phone_number"])
+    return jsonify(list_of_persons.get_queue())
+
+
+
+
+@app.route('/peoples', methods=['GET'])
+def get_all():
+    Queue = list_of_persons.get_queue()
+    return jsonify(Queue), 200
+    
+
+
+@app.route('/people', methods=['GET'])
+def next_inline():
+    next = list_of_persons.dequeue()
+    return jsonify(next), 200
+
+
+
+#@app.route('/members/<int:member_id>', methods=['DELETE'])
+#def remove_member(member_id):
+ #   jackson_family.delete_member(member_id)
+  #  return jsonify(jackson_family.get_all_members())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
