@@ -58,7 +58,7 @@ list_of_persons = Queue()
 def create_people():
     person = request.json
     list_of_persons.enqueue(person)
-    send("hello you added to the queue", person["phone_number"])
+    # send("hello you added to the queue", person["phone_number"])
     return jsonify(list_of_persons.get_queue())
 
 
@@ -66,15 +66,16 @@ def create_people():
 
 @app.route('/peoples', methods=['GET'])
 def get_all():
-    Queue = list_of_persons.get_queue()
-    return jsonify(Queue), 200
+    queue = list_of_persons.get_queue()
+    return jsonify(queue), 200
     
 
 
 @app.route('/people', methods=['GET'])
 def next_inline():
-    next = list_of_persons.dequeue()
-    return jsonify(next), 200
+    next_person = list_of_persons.dequeue()
+    send("Please come to the front desk, we have a table waiting for you", next_person["phone_number"])
+    return jsonify(next_person), 200
 
 
 
